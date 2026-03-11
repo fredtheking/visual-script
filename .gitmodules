@@ -1,0 +1,3 @@
+[submodule "game/external/raylib"]
+	path = game/external/raylib
+	url = https://github.com/raysan5/raylib.git
