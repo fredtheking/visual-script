@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 4.1)
 project(visual-script-bin)
 
 add_subdirectory(external/raylib)
+if(PLATFORM STREQUAL "Web")
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+    target_link_options(${PROJECT_NAME} PRIVATE
+            "-sUSE_GLFW=3"
+            "-sASYNCIFY"
+            "--shell-file ${CMAKE_SOURCE_DIR}/minshell.html"
+    )
+endif()
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS code/*.cpp)
 add_executable(${PROJECT_NAME} ${SOURCES})

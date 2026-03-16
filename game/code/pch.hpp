@@ -1,5 +1,8 @@
 #pragma once
 
+#if defined(PLATFORM_WEB)
+    #include <emscripten/emscripten.h>
+#endif
 #include <raylib.h>
 #include <raymath.h>
 

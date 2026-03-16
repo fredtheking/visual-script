@@ -21,7 +21,6 @@ namespace vs {
     while (not WindowShouldClose()) {
       Vector2 size = {(float)GetScreenWidth(), (float)GetScreenHeight()};
 
-
       BeginDrawing();
       ClearBackground(BLACK);
 
