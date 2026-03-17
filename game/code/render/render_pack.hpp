@@ -1,6 +1,5 @@
 #pragma once
 #include "pch.hpp"
-#include "utils/interfaces.hpp"
 #include "utils/rectangle_manip.hpp"
 
 namespace vs {
@@ -27,8 +26,9 @@ namespace vs {
 
       auto [x, y] = position.has_value() ? position.value() : Vector2Zero();
       auto [width, height] = size.has_value() ? size.value() : Vector2{source.width, source.height};
-
       const Rectangle destination{ x, y, width, height };
+
+      SetTextureFilter(target.texture, TEXTURE_FILTER_POINT);
       DrawTexturePro(target.texture, source, destination, Vector2Zero(), 0, WHITE);
     }
   };

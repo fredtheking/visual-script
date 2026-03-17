@@ -1,4 +1,5 @@
 #pragma once
+#include "frame.hpp"
 #include "pch.hpp"
 
 namespace vs::options {
@@ -20,14 +21,15 @@ namespace vs::options {
 
   inline void _setup() {
     set_window_title("Visual-Script");
+#if defined(PLATFORM_WEB)
+    set_window_size(1, 1);
+#else
     set_window_size(1380, 1020);
+#endif
   }
 
   inline void dispatch() {
     if (IsWindowResized())
-      set_window_size({
-        static_cast<float>(GetScreenWidth()),
-        static_cast<float>(GetScreenHeight())
-      });
+      set_window_size(frame::window_size);
   }
 }

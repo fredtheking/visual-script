@@ -15,6 +15,7 @@
 #include <memory>
 #include <queue>
 #include <any>
+#include <sstream>
 #include <fstream>
 #include <filesystem>
 #include <chrono>

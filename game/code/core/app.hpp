@@ -24,6 +24,7 @@ namespace vs {
     static void _draw_unfocused_caution();
     void _draw() override;
   public:
+    void _while_chunk();
     static int $run(int argc, char* argv[]);
   };
 }

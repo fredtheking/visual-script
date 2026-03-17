@@ -42,14 +42,16 @@ namespace vs {
     return app;
   }
 
+  static void wasm_while(void* arg) {
+    static_cast<App*>(arg)->_while_chunk();
+  }
+
   void App::loop() {
-    while (not WindowShouldClose()) {
-      _begin();
-      _process();
-      _after_proc();
-      _draw();
-      _end();
-    }
+#if defined(PLATFORM_WEB)
+    emscripten_set_main_loop_arg(wasm_while, this, 0, 1);
+#else
+    while (not WindowShouldClose()) _while_chunk();
+#endif
   }
 
   void App::_term_rl() {
@@ -99,6 +101,14 @@ namespace vs {
     }
 
     if (not frame::window_focused) _draw_unfocused_caution();
+  }
+
+  void App::_while_chunk() {
+    _begin();
+    _process();
+    _after_proc();
+    _draw();
+    _end();
   }
 
   int App::$run(const int argc, char *argv[]) {

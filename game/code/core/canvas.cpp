@@ -1,7 +1,7 @@
 #include "canvas.hpp"
-
 #include "utils/frame.hpp"
 #include "utils/options.hpp"
+#include "utils/string_manip.hpp"
 #include "utils/utils.hpp"
 
 namespace vs {
@@ -40,34 +40,30 @@ namespace vs {
   }
 
   void Canvas::_move_camera() {
-    static Vector2 last_mouse_world_pos;
-    static bool dragging;
+    static Vector2 last_mouse_pos;
 
-    const Vector2 mouse_world_now = GetScreenToWorld2D(frame::mouse_position, camera);
+    const Vector2 mouse_now = GetScreenToWorld2D(frame::mouse_position, camera);
 
     if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)) {
-      last_mouse_world_pos = mouse_world_now;
-      dragging = true;
+      last_mouse_pos = mouse_now;
       camera_velocity = Vector2Zero();
     }
 
     if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
-      const Vector2 diff = last_mouse_world_pos - mouse_world_now;
+      const Vector2 diff = last_mouse_pos - mouse_now;
 
       camera.target += diff;
       camera_velocity = diff;
 
-      last_mouse_world_pos = GetScreenToWorld2D(frame::mouse_position, camera);
+      last_mouse_pos = GetScreenToWorld2D(frame::mouse_position, camera);
     } else {
-      dragging = false;
-
       camera.target += camera_velocity;
       camera_velocity *= 0.87f;
 
-      if (std::abs(camera_velocity.x) < 0.01f) camera_velocity.x = 0;
-      if (std::abs(camera_velocity.y) < 0.01f) camera_velocity.y = 0;
+      if (Vector2Length(camera_velocity) < 0.01f) camera_velocity = Vector2Zero();
     }
 
+    if (not IsKeyDown(KEY_LEFT_CONTROL))
     if (const float wheel = GetMouseWheelMove(); wheel != 0) {
       const Vector2 mouse_world_pos = GetScreenToWorld2D(frame::mouse_position, camera);
       camera.offset = frame::mouse_position;
@@ -127,7 +123,13 @@ namespace vs {
     EndMode2D();
   }
   void Canvas::draw_ui() {
-    DrawTextEx(GetFontDefault(), "Hello, ui!", {200, 400}, 42, 1, RAYWHITE);
+    Rectangle rec = RectangleSize(options::window_size / 2);
+    const auto color = ColorAlpha(LIME, 0.1);
+
+    DrawRectangleGradientEx(rec, color, color, BLANK, color);
+    DrawRectangleGradientEx(RectangleAddPos(rec, {rec.width, 0}), color, BLANK, color, color);
+    DrawRectangleGradientEx(RectangleAddPos(rec, {0, rec.height}), color, color, color, BLANK);
+    DrawRectangleGradientEx(RectangleAddPos(rec, {rec.width, rec.height}), BLANK, color, color, color);
   }
 
   void Canvas::process() {
