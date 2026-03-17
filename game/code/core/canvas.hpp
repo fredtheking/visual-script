@@ -8,13 +8,17 @@ namespace vs {
   class App;
 
   class Canvas : ITerminatable, IDrawableObject, public IProcessable, public IRenderable {
-    ResizableRenderTexture2D rt;
+    ResizableRenderTexture2D main;
+    ResizableRenderTexture2D scratch;
+    Shader vignette_shader;
     Camera2D camera;
     float camera_zoom_target = 0;
     Vector2 camera_velocity = Vector2Zero();
 
     void _init_camera();
+    void _init_rl();
     void init();
+    void _term_rl();
     void term() override;
     void _move_camera();
     void _draw_grid() const;

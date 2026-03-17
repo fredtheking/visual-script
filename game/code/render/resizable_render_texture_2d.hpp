@@ -27,11 +27,14 @@ namespace vs {
     [[nodiscard]] Vector2 get_size() const {
       return { (float)texture.texture.width, (float)texture.texture.height };
     }
-    void begin_texture_mode(cref<Color> color) const {
+    void begin_texture_mode(maybe<Color> color) const {
       BeginTextureMode(texture);
+      if (color.has_value()) clear(color.value());
+    }
+    void clear(cref<Color> color) const {
       ClearBackground(color);
     }
-    static void end_texture_mode() {
+    void end_texture_mode() const {
       EndTextureMode();
     }
   };

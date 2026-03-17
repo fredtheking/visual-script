@@ -1,22 +1,24 @@
 #include "canvas.hpp"
 #include "utils/frame.hpp"
 #include "utils/options.hpp"
-#include "utils/string_manip.hpp"
 #include "utils/utils.hpp"
 
 namespace vs {
   Canvas::Canvas(cref<Vector2> size)
-  : rt(size)
+  : main(size)
+  , scratch(size)
+  , vignette_shader()
   , camera(Vector2Zero(), Vector2Zero(), 0, 1)
   { init(); }
   Canvas::~Canvas() { Canvas::term(); }
 
   void Canvas::resize(cref<Vector2> size) {
-    rt.resize(size);
+    main.resize(size);
+    scratch.resize(size);
   }
 
   Vector2 Canvas::get_size() const {
-    return rt.get_size();
+    return main.get_size();
   }
 
   void Canvas::reset_camera() {
@@ -31,12 +33,19 @@ namespace vs {
   void Canvas::_init_camera() {
     reset_camera();
   }
+  void Canvas::_init_rl() {
+    vignette_shader = LoadShader(nullptr, "resources/vignette.fs");
+  }
   void Canvas::init() {
     _init_camera();
+    _init_rl();
   }
 
+  void Canvas::_term_rl() {
+    UnloadShader(vignette_shader);
+  }
   void Canvas::term() {
-
+    _term_rl();
   }
 
   void Canvas::_move_camera() {
@@ -78,7 +87,7 @@ namespace vs {
   void Canvas::_draw_grid() const {
     static constexpr float GRID_SPACING = 20;
     static constexpr float OUTER_SPACE = 1;
-    static const auto GRID_COLOR = ColorAlpha(WHITE, 0.2);
+    static const auto GRID_COLOR = ColorAlpha(WHITE, 0.5f);
 
     auto [x1, y1] = GetScreenToWorld2D(Vector2Zero(), camera);
     auto [x2, y2] = GetScreenToWorld2D(get_size(), camera);
@@ -123,13 +132,7 @@ namespace vs {
     EndMode2D();
   }
   void Canvas::draw_ui() {
-    Rectangle rec = RectangleSize(options::window_size / 2);
-    const auto color = ColorAlpha(LIME, 0.1);
 
-    DrawRectangleGradientEx(rec, color, color, BLANK, color);
-    DrawRectangleGradientEx(RectangleAddPos(rec, {rec.width, 0}), color, BLANK, color, color);
-    DrawRectangleGradientEx(RectangleAddPos(rec, {0, rec.height}), color, color, color, BLANK);
-    DrawRectangleGradientEx(RectangleAddPos(rec, {rec.width, rec.height}), BLANK, color, color, color);
   }
 
   void Canvas::process() {
@@ -138,12 +141,24 @@ namespace vs {
   }
 
   RenderPack Canvas::render() {
-    rt.begin_texture_mode(utils::DIMBLACK);
-
+    scratch.begin_texture_mode(utils::DIMBLACK);
     draw_world();
-    draw_ui();
+    scratch.end_texture_mode();
 
-    ResizableRenderTexture2D::end_texture_mode();
-    return RenderPack(rt.texture);
+    main.begin_texture_mode(BLANK);
+    BeginShaderMode(vignette_shader);
+    RenderPack{scratch.texture}.draw(nullopt, nullopt);
+    EndShaderMode();
+    main.end_texture_mode();
+
+    scratch.begin_texture_mode(BLANK);
+    draw_ui();
+    scratch.end_texture_mode();
+
+    main.begin_texture_mode(nullopt);
+    RenderPack{scratch.texture}.draw(nullopt, nullopt);
+    main.end_texture_mode();
+
+    return RenderPack(main.texture);
   }
 }

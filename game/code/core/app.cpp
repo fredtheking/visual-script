@@ -4,6 +4,8 @@
 #include "log.hpp"
 #include "utils/frame.hpp"
 
+const Vector2 BOTTOM_SPACE = Vector2UnitY * 40;
+
 namespace vs {
   void App::_begin() {
     frame::dispatch();
@@ -37,7 +39,7 @@ namespace vs {
 
     options::_setup();
     app->_init_rl();
-    app->canvas = new Canvas(options::window_size);
+    app->canvas = new Canvas(options::window_size - BOTTOM_SPACE);
 
     return app;
   }

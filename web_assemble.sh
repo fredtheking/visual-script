@@ -9,5 +9,5 @@ emcc -o ./bin-web/index.html \
   -I./game/code/core \
   -I./game/code/render \
   -I./game/code/utils \
--DPLATFORM_WEB -s GL_ENABLE_GET_PROC_ADDRESS -s ALLOW_MEMORY_GROWTH=1 -s USE_GLFW=3 -std=c++23 --shell-file ./web/shell.html
+-DPLATFORM_WEB -s GL_ENABLE_GET_PROC_ADDRESS -s ALLOW_MEMORY_GROWTH=1 -s USE_GLFW=3 -std=c++23 --shell-file ./web/shell.html --preload-file ./game/resources@resources
 echo "done."
