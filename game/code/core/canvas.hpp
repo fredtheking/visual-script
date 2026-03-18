@@ -11,6 +11,8 @@ namespace vs {
     ResizableRenderTexture2D main;
     ResizableRenderTexture2D scratch;
     Shader vignette_shader;
+    int vignette_shader_color_uloc;
+    Color vignette_color;
     Camera2D camera;
     float camera_zoom_target = 0;
     Vector2 camera_velocity = Vector2Zero();
@@ -28,6 +30,7 @@ namespace vs {
     Canvas(cref<Vector2> size);
     ~Canvas() final;
 
+    void set_vignette_color(Color color);
     void resize(cref<Vector2> size);
     [[nodiscard]] Vector2 get_size() const;
     void reset_camera();

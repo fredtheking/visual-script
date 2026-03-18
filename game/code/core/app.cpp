@@ -4,7 +4,9 @@
 #include "log.hpp"
 #include "utils/frame.hpp"
 
-const Vector2 BOTTOM_SPACE = Vector2UnitY * 40;
+static Vector2 _get_canvas_size() {
+  return vs::options::window_size - (Vector2UnitY * 40);
+}
 
 namespace vs {
   void App::_begin() {
@@ -21,10 +23,13 @@ namespace vs {
   }
 
   void App::_init_rl() {
-    SetConfigFlags(
-      FLAG_WINDOW_RESIZABLE |
-      FLAG_VSYNC_HINT |
-      FLAG_WINDOW_ALWAYS_RUN);
+    int flags = FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT;
+
+    #if not defined(PLATFORM_WEB)
+    flags |= FLAG_WINDOW_ALWAYS_RUN;
+    #endif
+
+    SetConfigFlags(flags);
 
     InitWindow(
       options::window_size.x,
@@ -39,7 +44,7 @@ namespace vs {
 
     options::_setup();
     app->_init_rl();
-    app->canvas = new Canvas(options::window_size - BOTTOM_SPACE);
+    app->canvas = new Canvas(_get_canvas_size());
 
     return app;
   }
@@ -47,7 +52,6 @@ namespace vs {
   static void wasm_while(void* arg) {
     static_cast<App*>(arg)->_while_chunk();
   }
-
   void App::loop() {
 #if defined(PLATFORM_WEB)
     emscripten_set_main_loop_arg(wasm_while, this, 0, 1);
@@ -72,7 +76,7 @@ namespace vs {
     if (canvas) {
       canvas->process();
       if (frame::window_resized)
-        canvas->resize(options::window_size);
+        canvas->resize(_get_canvas_size());
     }
   }
 

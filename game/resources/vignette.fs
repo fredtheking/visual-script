@@ -17,6 +17,7 @@ varying vec4 fragColor;
 
 uniform sampler2D texture0;
 uniform vec4 colDiffuse;
+uniform vec4 colVignette;
 
 void main() {
     vec4 texelColor = TEXTURE(texture0, fragTexCoord);
@@ -25,9 +26,6 @@ void main() {
 
     vec2 uv = fragTexCoord - 0.5;
     float dist = length(uv);
-    float mask = smoothstep(0.0, 0.75, dist);
-
-    vec4 vignetteColor = vec4(0.0, 1.0, 0.0, 1.0);
-
-    gl_FragColor = vec4(mix(finalColor.rgb, vignetteColor.rgb, mask * 0.4), finalColor.a);
+    float mask = smoothstep(0.3, 0.95, dist);
+    gl_FragColor = vec4(mix(finalColor.rgb, colVignette.rgb, mask * 0.3), 1.0);
 }

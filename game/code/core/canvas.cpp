@@ -1,6 +1,5 @@
 #include "canvas.hpp"
 #include "utils/frame.hpp"
-#include "utils/options.hpp"
 #include "utils/utils.hpp"
 
 namespace vs {
@@ -11,6 +10,12 @@ namespace vs {
   , camera(Vector2Zero(), Vector2Zero(), 0, 1)
   { init(); }
   Canvas::~Canvas() { Canvas::term(); }
+
+  void Canvas::set_vignette_color(const Color color) {
+    vignette_color = color;
+    const auto normalized_color = ColorNormalize(color);
+    SetShaderValue(vignette_shader, vignette_shader_color_uloc, &normalized_color, SHADER_UNIFORM_VEC4);
+  }
 
   void Canvas::resize(cref<Vector2> size) {
     main.resize(size);
@@ -35,6 +40,8 @@ namespace vs {
   }
   void Canvas::_init_rl() {
     vignette_shader = LoadShader(nullptr, "resources/vignette.fs");
+    vignette_shader_color_uloc = GetShaderLocation(vignette_shader, "colVignette");
+    set_vignette_color(LIME);
   }
   void Canvas::init() {
     _init_camera();
@@ -53,31 +60,36 @@ namespace vs {
 
     const Vector2 mouse_now = GetScreenToWorld2D(frame::mouse_position, camera);
 
-    if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)) {
-      last_mouse_pos = mouse_now;
-      camera_velocity = Vector2Zero();
-    }
+    const bool ctrl_down = IsKeyDown(KEY_LEFT_CONTROL);
+    if (not ctrl_down) {
+      if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)){
+        last_mouse_pos = mouse_now;
+        camera_velocity = Vector2Zero();
+      }
 
-    if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
-      const Vector2 diff = last_mouse_pos - mouse_now;
+      if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
+        const Vector2 diff = last_mouse_pos - mouse_now;
 
-      camera.target += diff;
-      camera_velocity = diff;
+        camera.target += diff;
+        camera_velocity = diff;
 
-      last_mouse_pos = GetScreenToWorld2D(frame::mouse_position, camera);
+        last_mouse_pos = GetScreenToWorld2D(frame::mouse_position, camera);
+      } else {
+        camera.target += camera_velocity;
+        camera_velocity *= 0.87f;
+
+        if (Vector2Length(camera_velocity) < 0.01f) camera_velocity = Vector2Zero();
+      }
+
+      if (const float wheel = GetMouseWheelMove(); wheel != 0) {
+        const Vector2 mouse_world_pos = GetScreenToWorld2D(frame::mouse_position, camera);
+        camera.offset = frame::mouse_position;
+        camera.target = mouse_world_pos;
+        camera_zoom_target += wheel * 0.12f;
+      }
     } else {
-      camera.target += camera_velocity;
-      camera_velocity *= 0.87f;
-
-      if (Vector2Length(camera_velocity) < 0.01f) camera_velocity = Vector2Zero();
-    }
-
-    if (not IsKeyDown(KEY_LEFT_CONTROL))
-    if (const float wheel = GetMouseWheelMove(); wheel != 0) {
-      const Vector2 mouse_world_pos = GetScreenToWorld2D(frame::mouse_position, camera);
-      camera.offset = frame::mouse_position;
-      camera.target = mouse_world_pos;
-      camera_zoom_target += wheel * 0.12f;
+      const Vector2 ctrl_move = GetMouseWheelMoveV();
+      camera.target -= ctrl_move * 100;
     }
 
     camera_zoom_target = std::clamp<float>(camera_zoom_target, 0.5, 3.0);
