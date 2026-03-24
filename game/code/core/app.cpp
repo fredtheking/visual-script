@@ -1,17 +1,15 @@
 #include "app.hpp"
 #include "canvas.hpp"
-#include "utils/options.hpp"
-#include "log.hpp"
 #include "utils/frame.hpp"
+#include "utils/options.hpp"
 
 static Vector2 _get_canvas_size() {
-  return vs::options::window_size - (Vector2UnitY * 40);
+  return vs::frame::window_size - (Vector2UnitY * 40);
 }
 
 namespace vs {
   void App::_begin() {
     frame::dispatch();
-    options::dispatch();
   }
   void App::_after_proc() {
     BeginDrawing();
@@ -19,11 +17,15 @@ namespace vs {
   }
   void App::_end() {
     DrawFPS(10, 10);
+    if (frame::debug_mode)
+      DrawText("DEBUG", 120, 10, 20, PINK);
     EndDrawing();
   }
 
   void App::_init_rl() {
-    int flags = FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT;
+    int flags = FLAG_WINDOW_RESIZABLE
+    | FLAG_VSYNC_HINT
+    ;
 
     #if not defined(PLATFORM_WEB)
     flags |= FLAG_WINDOW_ALWAYS_RUN;
@@ -32,9 +34,9 @@ namespace vs {
     SetConfigFlags(flags);
 
     InitWindow(
-      options::window_size.x,
-      options::window_size.y,
-      options::window_title.c_str()
+      options::startup::window_size.x,
+      options::startup::window_size.y,
+      options::startup::window_title.c_str()
     );
     InitAudioDevice();
   }
@@ -44,6 +46,7 @@ namespace vs {
 
     options::_setup();
     app->_init_rl();
+    frame::dispatch();
     app->canvas = new Canvas(_get_canvas_size());
 
     return app;
@@ -83,7 +86,7 @@ namespace vs {
   void App::_draw_unfocused_caution() {
     static constexpr float BG_ALPHA = 0.4;
 
-    const auto rec = RectangleSize(options::window_size);
+    const auto rec = RectangleFromSize(frame::window_size);
     DrawRectangleRec(rec, ColorAlpha(BLACK, BG_ALPHA));
     DrawRectangleLinesEx(rec, 16, RED);
     DrawRectangleLinesEx(rec, 6, ORANGE);
@@ -93,17 +96,18 @@ namespace vs {
     const auto size_x = static_cast<float>(MeasureText(text, fontsize));
     DrawText(
       text,
-      static_cast<int>(std::round(options::window_size.x - size_x) / 2.0),
-      static_cast<int>(std::round(options::window_size.y - fontsize / 2) / 2.0),
+      static_cast<int>(std::round(frame::window_size.x - size_x) / 2.0),
+      static_cast<int>(std::round(frame::window_size.y - fontsize / 2) / 2.0),
       fontsize, WHITE);
   }
 
-  void App::_draw() {
+  void App::_draw() const {
     if (canvas) {
       static RenderPack latest_canvas_rp;
 
       if (frame::window_focused) latest_canvas_rp = canvas->render();
       latest_canvas_rp.draw(nullopt, nullopt);
+      canvas->draw_debug();
     }
 
     if (not frame::window_focused) _draw_unfocused_caution();

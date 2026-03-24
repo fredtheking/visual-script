@@ -1,6 +1,5 @@
 #pragma once
 #include "pch.hpp"
-#include "utils/interfaces.hpp"
 
 namespace vs {
   struct ResizableRenderTexture2D {

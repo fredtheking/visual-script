@@ -22,7 +22,7 @@ namespace vs {
     int term();
     void _process() override;
     static void _draw_unfocused_caution();
-    void _draw() override;
+    void _draw() const override;
   public:
     void _while_chunk();
     static int $run(int argc, char* argv[]);

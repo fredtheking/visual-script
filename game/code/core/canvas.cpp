@@ -4,8 +4,7 @@
 
 namespace vs {
   Canvas::Canvas(cref<Vector2> size)
-  : main(size)
-  , scratch(size)
+  : IRenderable(size)
   , vignette_shader()
   , camera(Vector2Zero(), Vector2Zero(), 0, 1)
   { init(); }
@@ -15,11 +14,6 @@ namespace vs {
     vignette_color = color;
     const auto normalized_color = ColorNormalize(color);
     SetShaderValue(vignette_shader, vignette_shader_color_uloc, &normalized_color, SHADER_UNIFORM_VEC4);
-  }
-
-  void Canvas::resize(cref<Vector2> size) {
-    main.resize(size);
-    scratch.resize(size);
   }
 
   Vector2 Canvas::get_size() const {
@@ -92,12 +86,14 @@ namespace vs {
       camera.target -= ctrl_move * 100;
     }
 
-    camera_zoom_target = std::clamp<float>(camera_zoom_target, 0.5, 3.0);
-    camera.zoom = std::lerp(camera.zoom, camera_zoom_target, 0.25f);
+    static constexpr float CLAMP_MIN = 0.5;
+    static constexpr float CLAMP_MAX = 3.0;
+
+    camera_zoom_target = std::clamp<float>(camera_zoom_target, CLAMP_MIN, CLAMP_MAX);
+    camera.zoom = std::clamp(std::lerp(camera.zoom, camera_zoom_target, 25.2f * GetFrameTime()), CLAMP_MIN, CLAMP_MAX);
   }
 
   void Canvas::_draw_grid() const {
-    static constexpr float GRID_SPACING = 20;
     static constexpr float OUTER_SPACE = 1;
     static const auto GRID_COLOR = ColorAlpha(WHITE, 0.5f);
 
@@ -135,24 +131,40 @@ namespace vs {
     DrawLine(x1, 0.0f, x2, 0.0f, ColorAlpha(RED, 0.89));
   }
 
-  void Canvas::draw_world() {
+  void Canvas::draw_world() const {
     BeginMode2D(camera);
 
     _draw_grid();
+    for (cref<Block> block : blocks)
+      block.draw_world();
     DrawTextEx(GetFontDefault(), "Hello, world!", {200, 100}, 42, 4, WHITE);
 
     EndMode2D();
   }
-  void Canvas::draw_ui() {
+  void Canvas::draw_ui() const {
+    for (cref<Block> block : blocks)
+      block.draw_ui();
 
+    DrawText(utils::format("Blocks count: {}", blocks.size()).c_str(), 10, 40, 20, RAYWHITE);
   }
 
   void Canvas::process() {
     if (IsKeyPressed(KEY_R)) reset_camera();
     _move_camera();
+
+    if (IsKeyDown(KEY_F) or IsKeyPressed(KEY_S)) {
+      for (int i = 0; i <= 100 * IsKeyDown(KEY_F); ++i) {
+        constexpr int SHIT = 1760;
+        Vector2 pos = { (float)GetRandomValue(0, SHIT), (float)GetRandomValue(0, SHIT) };
+        blocks.emplace_back(this, RectangleFromVectors(pos, {GRID_SPACING * 6, GRID_SPACING * 4}));
+      }
+    }
+
+    for (Block& block : blocks)
+      block.process();
   }
 
-  RenderPack Canvas::render() {
+  RenderPack Canvas::render() const {
     scratch.begin_texture_mode(utils::DIMBLACK);
     draw_world();
     scratch.end_texture_mode();
@@ -171,6 +183,11 @@ namespace vs {
     RenderPack{scratch.texture}.draw(nullopt, nullopt);
     main.end_texture_mode();
 
-    return RenderPack(main.texture);
+    return RenderPack(main);
+  }
+
+  void Canvas::draw_debug() const {
+    for (cref<Block> block : blocks)
+      block.draw_debug();
   }
 }
