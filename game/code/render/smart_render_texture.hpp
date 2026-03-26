@@ -2,11 +2,12 @@
 #include "pch.hpp"
 
 namespace vs {
-  struct ResizableRenderTexture2D {
-    explicit ResizableRenderTexture2D(cref<Vector2> size): texture() { load(size); }
-    ~ResizableRenderTexture2D() { unload(); }
+  struct SmartRenderTexture {
+    explicit SmartRenderTexture(cref<Vector2> size, bool preserve = false): texture(), preserve(preserve) { load(size); }
+    ~SmartRenderTexture() { if (not preserve) unload(); }
 
     RenderTexture2D texture;
+    bool preserve;
 
     void load(cref<Vector2> size) {
       if (not valid())

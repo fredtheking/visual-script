@@ -17,6 +17,7 @@ namespace vs::frame {
   inline bool mouse_released[MOUSE_BUTTON_COUNT];
 
   inline bool debug_mode = true;
+  inline int fps;
 
   inline void dispatch() {
     if (IsKeyPressed(KEY_F11))
@@ -42,5 +43,7 @@ namespace vs::frame {
 
     if (IsKeyPressed(KEY_D))
       debug_mode = not debug_mode;
+
+    fps = GetFPS();
   }
 }

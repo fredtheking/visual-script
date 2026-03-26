@@ -49,7 +49,7 @@ namespace vs {
     _term_rl();
   }
 
-  void Canvas::_move_camera() {
+  void Canvas::_process_move_camera() {
     static Vector2 last_mouse_pos;
 
     const Vector2 mouse_now = GetScreenToWorld2D(frame::mouse_position, camera);
@@ -68,30 +68,49 @@ namespace vs {
         camera_velocity = diff;
 
         last_mouse_pos = GetScreenToWorld2D(frame::mouse_position, camera);
-      } else {
-        camera.target += camera_velocity;
-        camera_velocity *= 0.87f;
-
-        if (Vector2Length(camera_velocity) < 0.01f) camera_velocity = Vector2Zero();
       }
 
       if (const float wheel = GetMouseWheelMove(); wheel != 0) {
         const Vector2 mouse_world_pos = GetScreenToWorld2D(frame::mouse_position, camera);
         camera.offset = frame::mouse_position;
         camera.target = mouse_world_pos;
-        camera_zoom_target += wheel * 0.12f;
+        camera_zoom_target += wheel * 0.07f;
       }
     } else {
-      const Vector2 ctrl_move = GetMouseWheelMoveV();
-      camera.target -= ctrl_move * 100;
+      int sensitivity = 252;
+      Vector2 ctrl_move = Vector2Normalize(GetMouseWheelMoveV());
+      #if defined(PLATFORM_WEB)
+      ctrl_move.x = -ctrl_move.x;
+      sensitivity = 100;
+      #endif
+      printf("shit - %s\n", Vector2String(ctrl_move).c_str());
+      camera_velocity -= ctrl_move * GetFrameTime() * sensitivity;
+    }
+
+    if (IsMouseButtonUp(MOUSE_MIDDLE_BUTTON) or ctrl_down) {
+      camera.target += camera_velocity;
+      camera_velocity *= 0.87f;
+      if (Vector2Length(camera_velocity) < 0.01f) camera_velocity = Vector2Zero();
     }
 
     static constexpr float CLAMP_MIN = 0.5;
     static constexpr float CLAMP_MAX = 3.0;
 
     camera_zoom_target = std::clamp<float>(camera_zoom_target, CLAMP_MIN, CLAMP_MAX);
-    camera.zoom = std::clamp(std::lerp(camera.zoom, camera_zoom_target, 25.2f * GetFrameTime()), CLAMP_MIN, CLAMP_MAX);
+    camera.zoom = frame::fps > 30 ? std::clamp(std::lerp(camera.zoom, camera_zoom_target, 25.2f * GetFrameTime()), CLAMP_MIN, CLAMP_MAX) : camera_zoom_target;
   }
+  void Canvas::_process_visible_rect() {
+    auto [tl_x, tl_y] = GetScreenToWorld2D(Vector2Zero(), camera);
+    auto [br_x, br_y] = GetScreenToWorld2D(frame::window_size, camera);
+
+    visible_rect = {
+      tl_x,
+      tl_y,
+      br_x - tl_x,
+      br_y - tl_y
+    };
+  }
+
 
   void Canvas::_draw_grid() const {
     static constexpr float OUTER_SPACE = 1;
@@ -150,7 +169,9 @@ namespace vs {
 
   void Canvas::process() {
     if (IsKeyPressed(KEY_R)) reset_camera();
-    _move_camera();
+    _process_move_camera();
+
+    _process_visible_rect();
 
     if (IsKeyDown(KEY_F) or IsKeyPressed(KEY_S)) {
       for (int i = 0; i <= 100 * IsKeyDown(KEY_F); ++i) {

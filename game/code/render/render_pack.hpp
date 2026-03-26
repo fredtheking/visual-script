@@ -1,6 +1,6 @@
 #pragma once
 #include "pch.hpp"
-#include "render/resizable_render_texture_2d.hpp"
+#include "render/smart_render_texture.hpp"
 #include "utils/rectangle_manip.hpp"
 
 namespace vs {
@@ -9,7 +9,7 @@ namespace vs {
       : target(rt)
       , source(RectangleFromSize({ (float)rt.texture.width, -(float)rt.texture.height }))
     {}
-    explicit RenderPack(cref<ResizableRenderTexture2D> rrt)
+    explicit RenderPack(cref<SmartRenderTexture> rrt)
       : target(rrt.texture)
       , source(RectangleFromSize({ (float)rrt.texture.texture.width, -(float)rrt.texture.texture.height }))
     {}

@@ -1,7 +1,7 @@
 #pragma once
 #include "pch.hpp"
 #include "core/log.hpp"
-#include "render/resizable_render_texture_2d.hpp"
+#include "render/smart_render_texture.hpp"
 
 namespace vs {
   struct RenderPack;
@@ -47,8 +47,8 @@ namespace vs {
 
   struct IRenderable {
   protected:
-    ResizableRenderTexture2D main;
-    ResizableRenderTexture2D scratch;
+    SmartRenderTexture main;
+    SmartRenderTexture scratch;
   public:
     explicit IRenderable(cref<Vector2> size) : main(size), scratch(size) {}
     virtual ~IRenderable() = default;

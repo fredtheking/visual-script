@@ -2,7 +2,7 @@
 #include "block.hpp"
 #include "pch.hpp"
 #include "render/render_pack.hpp"
-#include "render/resizable_render_texture_2d.hpp"
+#include "render/smart_render_texture.hpp"
 #include "utils/interfaces.hpp"
 
 namespace vs {
@@ -19,13 +19,15 @@ namespace vs {
     float camera_zoom_target = 0;
     Vector2 camera_velocity = Vector2Zero();
     vector<Block> blocks;
+    Rectangle visible_rect;
 
     void _init_camera();
     void _init_rl();
     void init();
     void _term_rl();
     void term() override;
-    void _move_camera();
+    void _process_move_camera();
+    void _process_visible_rect();
     void _draw_grid() const;
     void draw_world() const override;
     void draw_ui() const override;

@@ -1,6 +1,7 @@
 #pragma once
 #include "hitbox.hpp"
 #include "pch.hpp"
+#include "render/render_pack.hpp"
 #include "utils/interfaces.hpp"
 #include "utils/rectangle_manip.hpp"
 
@@ -10,6 +11,10 @@ namespace vs {
   class Block : public ITerminatable, public IProcessable, public IDrawableObject, public IDebugDrawable {
   public:
     static constexpr float HEADER_SIZE = 20;
+
+    enum class BlockType: byte {
+      DEFAULT_NONE = 0,
+    };
   private:
     Rectangle header_rect_offset;
     Hitbox header_hitbox;
@@ -18,9 +23,12 @@ namespace vs {
     Hitbox footer_hitbox;
     Rectangle rectangle;
     Canvas* canvas;
+    BlockType type;
+    static unordered_map<BlockType, RenderPack> rendered;
 
     void init();
     void term() override;
+    [[nodiscard]] RenderPack render() const;
   public:
     Block(Canvas* canvas, cref<Rectangle> content_rect);
     ~Block() override;
